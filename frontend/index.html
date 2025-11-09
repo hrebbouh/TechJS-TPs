@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Book Reading Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 p-6 text-gray-900">
+
+    <h1 class="text-3xl font-bold mb-4">📚 Book Reading Tracker</h1>
+
+    <!-- BOOK FORM -->
+    <form id="bookForm" class="bg-white p-4 rounded shadow-md grid grid-cols-2 gap-4">
+
+        <input required class="border p-2 rounded" name="title" placeholder="Title">
+        <input required class="border p-2 rounded" name="author" placeholder="Author">
+
+        <input required class="border p-2 rounded" type="number" name="pages" placeholder="Total Pages" min="1">
+        <input required class="border p-2 rounded" type="number" name="pagesRead" placeholder="Pages Read" min="0">
+
+        <!-- STATUS ENUM -->
+        <select required name="status" class="border p-2 rounded">
+            <option disabled selected>Select Status</option>
+            <option>Read</option>
+            <option>Re-read</option>
+            <option>DNF</option>
+            <option>Currently reading</option>
+            <option>Returned Unread</option>
+            <option>Want to read</option>
+        </select>
+
+        <!-- FORMAT ENUM -->
+        <select required name="format" class="border p-2 rounded">
+            <option disabled selected>Select Format</option>
+            <option>Print</option>
+            <option>PDF</option>
+            <option>Ebook</option>
+            <option>AudioBook</option>
+        </select>
+
+        <input class="border p-2 rounded" name="suggestedBy" placeholder="Suggested by">
+        <input required class="border p-2 rounded" type="number" name="price" placeholder="Price" min="0">
+
+        <!-- FINISHED FIELD REMOVED (must be set by backend automatically) -->
+
+        <button type="submit" class="col-span-2 bg-blue-600 text-white p-2 rounded">
+            Add Book
+        </button>
+    </form>
+
+    <!-- GLOBAL STATS -->
+    <div id="stats" class="mt-6 text-lg font-semibold"></div>
+
+    <!-- BOOK LIST -->
+    <div id="bookList" class="mt-6 grid gap-4"></div>
+
+<script>
+const API = "http://localhost:3000/books";
+
+/* Submit book form */
+document.getElementById("bookForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const form = new FormData(e.target);
+    const data = Object.fromEntries(form);
+
+    // Convert numeric values
+    data.pages = Number(data.pages);
+    data.pagesRead = Number(data.pagesRead);
+    data.price = Number(data.price);
+
+    // Enforce pagesRead < pages
+    if (data.pagesRead > data.pages) {
+        alert("Pages read cannot be greater than total pages.");
+        return;
+    }
+
+    // finished must NOT be added — backend will set it automatically
+
+    await fetch(API, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(data)
+    });
+
+    e.target.reset();
+    loadBooks();
+});
+
+/* Fetch books */
+async function loadBooks() {
+    const res = await fetch(API);
+    const books = await res.json();
+
+    let html = "";
+    let totalBooksRead = 0;
+    let totalPagesRead = 0;
+
+    books.forEach(book => {
+        const percent = ((book.pagesRead / book.pages) * 100).toFixed(1);
+
+        if (book.finished) totalBooksRead++;
+        totalPagesRead += book.pagesRead;
+
+        html += `
+            <div class="bg-white p-4 rounded shadow-md">
+                <h2 class="text-xl font-bold">${book.title}</h2>
+                <p>By: ${book.author}</p>
+                <p>Status: ${book.status}</p>
+
+                <div class="w-full bg-gray-300 h-4 rounded mt-2">
+                    <div class="bg-green-600 h-4 rounded" style="width:${percent}%"></div>
+                </div>
+
+                <p class="text-sm mt-1">${percent}% read (${book.pagesRead}/${book.pages})</p>
+
+                <button onclick="deleteBook('${book._id}')"
+                        class="mt-3 bg-red-600 text-white px-2 py-1 rounded">
+                    Delete
+                </button>
+            </div>`;
+    });
+
+    document.getElementById("bookList").innerHTML = html;
+
+    document.getElementById("stats").innerHTML =
+        `Books finished: ${totalBooksRead} | 📖 Total pages read: ${totalPagesRead}`;
+}
+
+/* Delete a book */
+async function deleteBook(id) {
+    await fetch(`${API}/${id}`, { method: "DELETE" });
+    loadBooks();
+}
+
+/* Load on startup */
+loadBooks();
+</script>
+
+</body>
+</html>
