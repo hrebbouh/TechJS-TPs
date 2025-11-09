@@ -1,0 +1,11 @@
+extends layout
+
+block content
+  div.max-w-md.mx-auto.mt-10
+    h1.text-2xl.font-bold.mb-4 Login
+    form(method="POST" action="/login" class="bg-white p-6 rounded shadow-md")
+      input(name="username" placeholder="Username" class="border p-2 rounded w-full mb-2")
+      input(type="password" name="password" placeholder="Password" class="border p-2 rounded w-full mb-2")
+      button(type="submit" class="bg-green-600 text-white p-2 rounded w-full") Login
+    p.mt-2
+      a(href="/register" class="text-blue-600") Don't have an account? Register

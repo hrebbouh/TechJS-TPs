@@ -1,0 +1,12 @@
+extends layout
+
+block content
+  div.max-w-3xl.mx-auto.mt-10
+    h1.text-3xl.font-bold.mb-6 Books Page
+    a(href="/logout" class="text-red-600 mb-4 inline-block") Logout
+    div.grid.grid-cols-2.gap-4
+      each book in books
+        div.bg-white.p-4.rounded.shadow
+          h2.text-xl.font-bold= book.title
+          p Author: #{book.author}
+          p Status: #{book.status}
